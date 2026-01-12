@@ -1,0 +1,9 @@
+{
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "bluetooth"
+  ],
+  "name": "كاشير الذكاء الاصطناعي Pro v6",
+  "description": "نظام إدارة المبيعات المتطور مع سلة تسوق ديناميكية ودعم كامل للمس والأوامر الصوتية والطباعة الحرارية."
+}
