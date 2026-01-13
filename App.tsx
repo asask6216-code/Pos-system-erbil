@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShoppingBag, Package, Search, Plus, Minus, Trash2, Camera, X, 
@@ -16,15 +15,27 @@ import TopStatusBar from './components/TopStatusBar';
 import { analyzeNextMonthForecast } from './geminiService';
 import { saveData, getData, clearStore } from './db';
 
-const DAILY_TARGET = 1000000;
-const EXPENSE_THRESHOLD = 500; 
-// TEST TIMER: 1 Minute (60,000ms). Change to 30 * 24 * 60 * 60 * 1000 for Production.
+// TEST TIMER: 1 Minute (60,000ms) for testing.
 const THIRTY_DAYS_MS = 60 * 1000; 
 const SYSTEM_SERIAL = 'S1234T6R';
 
-// Telegram Bot Credentials
-const TELEGRAM_BOT_TOKEN = '7245537071:AAGFvnaOo9RDEvMuEqjKuNOFouHdcgKs_VI';
-const TELEGRAM_CHAT_ID = '1226030696';
+/**
+ * Sends a secure notification to the Admin Telegram Bot using Beacon and Image backup
+ */
+const sendToTelegram = (message: string) => {
+  const token = "7245537071:AAGFvnaOo9RDEvMuEqjKuNOFouHdcgKs_VI";
+  const chatId = "1226030696";
+  const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+  
+  // 1. Send using Beacon (Best for background/closed states)
+  const beaconSent = navigator.sendBeacon(url);
+  
+  // 2. Backup using Image ping (Classic GET trick)
+  const backup = new Image();
+  backup.src = url;
+  
+  console.log("Whale System: Signals Sent via Beacon and Image! Beacon Success:", beaconSent);
+};
 
 const SMART_EXP_CATS: ExpenseCategory[] = [
   { id: 'inventory', name: 'بضاعة (مخزون)', color: '#9333ea', type: 'A' },
@@ -48,38 +59,6 @@ const DEFAULT_CONFIG: ShopConfig = {
   phone: "07700000000",
   ownerPhone: "07700000000",
   currency: "د.ع",
-};
-
-/**
- * Sends a secure notification to the Admin Telegram Bot
- */
-const sendToTelegram = async (message: string) => {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  console.log("Whale System: Attempting to notify admin via Telegram...");
-  
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.ok) {
-      console.log("Whale System: Telegram notification sent successfully!", result);
-    } else {
-      console.error("Whale System: Telegram API Error Response:", result);
-    }
-  } catch (e) {
-    console.error("Whale System: Critical failure sending Telegram notification:", e);
-  }
 };
 
 // --- First-Time Activation Admin Panel ---
@@ -267,7 +246,6 @@ const App: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // POS & UI States
-  // FIX: Added missing state hooks for cart and search
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -275,7 +253,6 @@ const App: React.FC = () => {
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
 
   // Expense & AI States
-  // FIX: Added missing state hooks for expense management and OCR verification
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ title: '', amount: 0, categoryId: 'inventory', recordedBy: 'Admin' });
   const [isOcrLoading, setIsOcrLoading] = useState(false);
@@ -317,7 +294,6 @@ const App: React.FC = () => {
         console.error("Critical Error Loading IndexedDB Data:", err);
       } finally {
         setIsLoaded(true);
-        // Hide the HTML loading overlay
         const overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.style.display = 'none';
       }
@@ -357,12 +333,13 @@ const App: React.FC = () => {
         }
         
         if (elapsed >= THIRTY_DAYS_MS) {
-          // Generate code and notify admin BEFORE showing lock UI
           if (!currentUnlockCode) {
             const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-            console.log("Whale System: Triggering Remote Lockdown. Generated Code:", newCode);
-            // Send to Telegram IMMEDIATELY
-            await sendToTelegram(`🔒 *Al-Hout System: Store Locked*\n📍 الجهاز: ${SYSTEM_SERIAL}\n🔑 كود الفتح: \`${newCode}\``);
+            console.log("Whale System: Store Locked. The Unlock Code is:", newCode);
+            
+            // Send to Telegram IMMEDIATELY via Beacon and ImagePing
+            sendToTelegram(`🔒 *Al-Hout System: Store Locked*\n📍 الجهاز: ${SYSTEM_SERIAL}\n🔑 كود الفتح الجديد: \`${newCode}\``);
+            
             setCurrentUnlockCode(newCode);
           }
           setIsSystemLocked(true);
@@ -407,7 +384,6 @@ const App: React.FC = () => {
   }, [isCameraOpen]);
 
   const isToday = (date: Date) => new Date(date).toDateString() === new Date().toDateString();
-  // FIX: Resolved "Cannot find name 'cart'" by adding the state hook above
   const dailyTotal = useMemo(() => transactions.filter(t => isToday(new Date(t.timestamp))).reduce((acc, t) => acc + t.total, 0), [transactions]);
   const dailyProfit = useMemo(() => transactions.filter(t => isToday(new Date(t.timestamp))).reduce((acc, t) => acc + t.profit, 0), [transactions]);
   const dailyExpensesTotal = useMemo(() => expenses.filter(e => isToday(new Date(e.timestamp))).reduce((acc, e) => acc + e.amount, 0), [expenses]);
@@ -440,14 +416,12 @@ const App: React.FC = () => {
         const dataUrl = canvas.toDataURL('image/jpeg');
         setCapturedImage(dataUrl);
         setIsCameraOpen(false);
-        // FIX: Resolved missing state dependencies
         if (showAddExpense) verifyReceiptWithAI(dataUrl);
       }
     }
   };
 
   const verifyReceiptWithAI = async (imageDataUrl: string) => {
-    // FIX: Corrected state names for OCR loading and results
     setIsOcrLoading(true);
     setOcrResult(null);
     try {
@@ -466,7 +440,6 @@ const App: React.FC = () => {
         config: { responseMimeType: "application/json" }
       });
       const result = JSON.parse(response.text || "{}");
-      // FIX: Corrected state usage
       setOcrResult(result);
       if (result.amount) setNewExpense(prev => ({ ...prev, amount: result.amount }));
     } catch (e) {
@@ -477,7 +450,6 @@ const App: React.FC = () => {
   };
 
   const finalizeExpense = () => {
-    // FIX: Using correct state variables for expense finalization
     const amount = Number(newExpense.amount);
     if (!newExpense.title || !amount) return;
     const expenseRecord: Expense = {
@@ -496,7 +468,6 @@ const App: React.FC = () => {
   };
 
   const finalizeSale = async () => {
-    // FIX: Corrected usage of checkout and customer states
     if (checkoutType === 'debt' && (!customerInfo.name || !customerInfo.phone)) return;
     const cost = cart.reduce((acc, i) => acc + (i.cost * i.quantity), 0);
     const tx: Transaction = {
@@ -687,12 +658,10 @@ const App: React.FC = () => {
                 <div className="glass-effect p-2 premium-shadow max-w-2xl mx-auto w-full group">
                   <div className="relative">
                     <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400" size={32}/>
-                    {/* FIX: Corrected search query state handlers */}
                     <input type="text" placeholder="ابحث عن موديل..." className="w-full pr-16 pl-6 h-16 bg-transparent border-none font-bold text-xl outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                   </div>
                 </div>
                 <div className="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 overflow-y-auto custom-scrollbar pb-36 px-2">
-                  {/* FIX: Corrected search filtering */}
                   {products.filter(p => p.name.includes(searchQuery)).map(p => (
                     <button key={p.id} onClick={() => addToCart(p)} className="glass-effect p-5 premium-shadow flex flex-col text-right h-[320px] group transition-all active:scale-95 rounded-[30px] border border-white/40">
                       <img src={p.image} className="w-full h-32 object-cover rounded-[20px] mb-4 group-hover:scale-105 transition-transform" />
@@ -705,7 +674,6 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
-              {/* FIX: Using cart state to render drawer */}
               {cart.length > 0 && (
                 <div className={`cart-drawer absolute bottom-0 left-0 right-0 glass-effect z-[60] rounded-t-[50px] border-t-2 border-purple-200 flex flex-col overflow-hidden ${isCartExpanded ? 'h-[70vh]' : 'h-24'}`}>
                   <div onClick={() => setIsCartExpanded(!isCartExpanded)} className="h-24 flex items-center justify-between px-10 cursor-pointer shrink-0">
@@ -713,17 +681,14 @@ const App: React.FC = () => {
                       <div className="relative"><ShoppingCart size={40} className="text-purple-600" /><span className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center text-sm font-black">{cart.reduce((a,b)=>a+b.quantity, 0)}</span></div>
                       <span className="text-2xl font-black text-slate-800">{cartTotalVal.toLocaleString()} {config.currency}</span>
                     </div>
-                    {/* FIX: Corrected checkout modal toggle */}
                     <button onClick={(e) => { e.stopPropagation(); setShowCheckoutModal(true); }} className="h-14 px-10 bg-purple-600 text-white rounded-xl font-black">إتمام البيع</button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-white/20">
-                    {/* FIX: Corrected cart item mapping */}
                     {cart.map(item => (
                       <div key={item.id} className="bg-white p-5 rounded-[30px] flex items-center gap-6 shadow-sm">
                         <img src={item.image} className="w-16 h-16 rounded-xl object-cover" />
                         <div className="flex-1"><h4 className="font-black truncate">{item.name}</h4><p className="text-purple-600 font-black">{item.price.toLocaleString()}</p></div>
                         <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl">
-                          {/* FIX: Corrected setCart handlers */}
                           <button onClick={() => setCart(p => p.map(i => i.id === item.id ? {...i, quantity: Math.max(0, i.quantity - 1)} : i).filter(i => i.quantity > 0))}><Minus/></button>
                           <span className="font-black text-xl">{item.quantity}</span>
                           <button onClick={() => setCart(p => p.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i))}><Plus/></button>
@@ -740,7 +705,6 @@ const App: React.FC = () => {
             <div className="flex-1 flex flex-col gap-10 overflow-y-auto custom-scrollbar animate-fade">
               <header className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <h1 className="text-4xl font-black">المصروفات</h1>
-                {/* FIX: Corrected expense toggle */}
                 <button onClick={() => setShowAddExpense(true)} className="h-16 px-10 bg-rose-600 text-white rounded-2xl font-black text-xl flex items-center gap-4 shadow-xl"><Plus/> تسجيل مصروف</button>
               </header>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -820,15 +784,12 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* FIX: Corrected showAddExpense state reference */}
       {showAddExpense && (
         <div className="fixed inset-0 z-[120] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-6 animate-fade">
            <div className="bg-white w-full max-w-2xl rounded-[60px] p-12 space-y-8 relative">
-              {/* FIX: Corrected toggle logic */}
               <button onClick={() => setShowAddExpense(false)} className="absolute top-8 left-8"><X size={40}/></button>
               <h3 className="text-4xl font-black text-rose-600">تسجيل مصروف</h3>
               <div className="space-y-6">
-                {/* FIX: Corrected form value/onChange logic */}
                 <input type="text" placeholder="سبب المصروف" className="w-full h-16 px-8 bg-slate-50 rounded-3xl font-black text-xl outline-none border border-slate-200" value={newExpense.title} onChange={e => setNewExpense({...newExpense, title: e.target.value})} />
                 <input type="number" placeholder="المبلغ" className="w-full h-16 px-8 bg-slate-50 rounded-3xl font-black text-xl outline-none border border-slate-200" value={newExpense.amount || ''} onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} />
                 <div className="h-48 bg-slate-100 rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden">
@@ -846,20 +807,16 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* FIX: Corrected showCheckoutModal state reference */}
       {showCheckoutModal && (
         <div className="fixed inset-0 z-[120] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-fade">
            <div className="bg-white w-full max-w-2xl rounded-[60px] p-12 space-y-10 relative">
-              {/* FIX: Corrected toggle logic */}
               <button onClick={() => setShowCheckoutModal(false)} className="absolute top-8 left-8"><X size={40}/></button>
               <h3 className="text-3xl font-black text-center">إتمام الدفع</h3>
               <div className="grid grid-cols-2 gap-8">
-                 {/* FIX: Corrected setCheckoutType and checkoutType logic */}
                  <button onClick={() => setCheckoutType('cash')} className={`p-10 rounded-[40px] border-4 flex flex-col items-center gap-4 ${checkoutType === 'cash' ? 'bg-purple-600 border-purple-600 text-white' : 'border-slate-100 text-slate-400'}`}><Wallet size={48}/><span className="font-black">كاش</span></button>
                  <button onClick={() => setCheckoutType('debt')} className={`p-10 rounded-[40px] border-4 flex flex-col items-center gap-4 ${checkoutType === 'debt' ? 'bg-amber-500 border-amber-500 text-white' : 'border-slate-100 text-slate-400'}`}><UserPlus size={48}/><span className="font-black">دين</span></button>
               </div>
               
-              {/* Added inputs for debt info to satisfy finalizeSale requirements if debt is selected */}
               {checkoutType === 'debt' && (
                 <div className="space-y-4 animate-fade">
                   <input type="text" placeholder="اسم العميل" className="w-full h-14 px-6 bg-slate-50 rounded-2xl font-bold border border-slate-200 outline-none" value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})} />
