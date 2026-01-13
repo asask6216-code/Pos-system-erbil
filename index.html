@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>AI Pro Cashier | Premium Dashboard</title>
+    <link rel="manifest" href="https://localhost/manifest.json" /> <!-- Updated to ensure HTTPS relative or full if needed, keeping relative for Vercel -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#9333ea" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -31,6 +32,28 @@
         width: 100vw;
         -webkit-tap-highlight-color: transparent;
       }
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: #0f172a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        color: white;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255,255,255,0.1);
+        border-top-color: #9333ea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
       .glass-effect {
         background: var(--glass-bg);
         backdrop-filter: blur(16px);
@@ -108,16 +131,31 @@
 </script>
 </head>
   <body>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div style="font-family: Tajawal; font-weight: bold;">جاري تحميل نظام الحوت...</div>
+      <div id="error-msg" style="color: #ef4444; margin-top: 20px; font-size: 12px; display: none;">
+        فشل التحميل. يرجى التحقق من اتصال الإنترنت.
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
     <script>
+      // Service worker and simple error timeout to show error message if app takes too long
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('SW registration failed: ', err);
+            console.error('SW registration failed: ', err);
           });
         });
       }
+      
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (root && !root.innerHTML.trim()) {
+          document.getElementById('error-msg').style.display = 'block';
+        }
+      }, 8000);
     </script>
   </body>
 </html>

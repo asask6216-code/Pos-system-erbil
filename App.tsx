@@ -262,29 +262,36 @@ const App: React.FC = () => {
   // Initialization from IndexedDB
   useEffect(() => {
     const loadAppData = async () => {
-      const storedProducts = await getData('products', 'list');
-      const storedTx = await getData('transactions', 'list');
-      const storedExpenses = await getData('expenses', 'list');
-      const storedDebts = await getData('debts', 'list');
-      const storedConfig = await getData('settings', 'config');
-      
-      const choice = await getData('settings', 'activationChoice');
-      const ts = await getData('settings', 'activationTimestamp');
-      const code = await getData('settings', 'currentUnlockCode');
+      try {
+        const storedProducts = await getData('products', 'list');
+        const storedTx = await getData('transactions', 'list');
+        const storedExpenses = await getData('expenses', 'list');
+        const storedDebts = await getData('debts', 'list');
+        const storedConfig = await getData('settings', 'config');
+        
+        const choice = await getData('settings', 'activationChoice');
+        const ts = await getData('settings', 'activationTimestamp');
+        const code = await getData('settings', 'currentUnlockCode');
 
-      setProducts(storedProducts || INITIAL_PRODUCTS);
-      setTransactions(storedTx || []);
-      setExpenses(storedExpenses || []);
-      setDebts(storedDebts || []);
-      setConfig(storedConfig || DEFAULT_CONFIG);
-      setCurrentUnlockCode(code || '');
-      
-      if (choice) {
-        setActivationChoice(choice);
-        setActivationTimestamp(ts);
+        setProducts(storedProducts || INITIAL_PRODUCTS);
+        setTransactions(storedTx || []);
+        setExpenses(storedExpenses || []);
+        setDebts(storedDebts || []);
+        setConfig(storedConfig || DEFAULT_CONFIG);
+        setCurrentUnlockCode(code || '');
+        
+        if (choice) {
+          setActivationChoice(choice);
+          setActivationTimestamp(ts);
+        }
+      } catch (err) {
+        console.error("Critical Error Loading IndexedDB Data:", err);
+      } finally {
+        setIsLoaded(true);
+        // Hide the HTML-only loading overlay once React is ready
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.style.display = 'none';
       }
-      
-      setIsLoaded(true);
     };
     loadAppData();
   }, []);
@@ -448,7 +455,7 @@ const App: React.FC = () => {
 
   const finalizeExpense = () => {
     const amount = Number(newExpense.amount);
-    if (!newExpense.title || !amount || !newExpense.recordedBy) return alert("أكمل البيانات.");
+    if (!newExpense.title || !amount || !newExpense.recordedBy) return;
     const expenseRecord: Expense = {
       id: `EXP-${Date.now()}`,
       title: newExpense.title || '',
@@ -465,7 +472,7 @@ const App: React.FC = () => {
   };
 
   const finalizeSale = async () => {
-    if (checkoutType === 'debt' && (!customerInfo.name || !customerInfo.phone)) return alert("أدخل بيانات الزبون.");
+    if (checkoutType === 'debt' && (!customerInfo.name || !customerInfo.phone)) return;
     const cost = cart.reduce((acc, i) => acc + (i.cost * i.quantity), 0);
     const tx: Transaction = {
       id: `TX-${Date.now()}`, items: [...cart], total: cartTotalVal, profit: cartTotalVal - cost,
@@ -508,7 +515,8 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isLoaded) return <div className="h-screen bg-slate-900 flex items-center justify-center text-white font-black text-2xl animate-pulse">Loading Al-Hout System...</div>;
+  // If loading, React won't render anything yet, the HTML div handles the UI.
+  if (!isLoaded) return null;
 
   // 1. Initial Admin Activation
   if (isLaunched && activationChoice === 'unconfigured') {
@@ -532,7 +540,7 @@ const App: React.FC = () => {
           <h1 className="text-5xl font-black tracking-tight mb-2 uppercase">The Whale <span className="text-purple-500">System</span></h1>
           <p className="text-slate-400 text-lg font-medium opacity-80 italic">نظام كاشير مبيعات ذكي وفائق الأمان</p>
         </div>
-        <button onClick={() => setIsLaunched(true)} className="btn-premium w-full max-w-xs h-16 bg-white text-slate-900 rounded-2xl font-black text-xl shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+        <button onClick={() => setIsLaunched(true)} className="btn-touch w-full max-w-xs h-16 bg-white text-slate-900 rounded-2xl font-black text-xl shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
           دخول النظام <Power size={24}/>
         </button>
       </div>
