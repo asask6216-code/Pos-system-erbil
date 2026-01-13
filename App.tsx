@@ -20,21 +20,20 @@ const THIRTY_DAYS_MS = 60 * 1000;
 const SYSTEM_SERIAL = 'S1234T6R';
 
 /**
- * Sends a secure notification to the Admin Telegram Bot using Beacon and Image backup
+ * Sends a secure notification to the Admin Telegram Bot using Window Open method
  */
 const sendToTelegram = (message: string) => {
-  const token = "7245537071:AAGFvnaOo9RDEvMuEqjKuNOFouHdcgKs_VI";
-  const chatId = "1226030696";
-  const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-  
-  // 1. Send using Beacon (Best for background/closed states)
-  const beaconSent = navigator.sendBeacon(url);
-  
-  // 2. Backup using Image ping (Classic GET trick)
-  const backup = new Image();
-  backup.src = url;
-  
-  console.log("Whale System: Signals Sent via Beacon and Image! Beacon Success:", beaconSent);
+    const token = "7245537071:AAGFvnaOo9RDEvMuEqjKuNOFouHdcgKs_VI";
+    const chatId = "1226030696";
+    const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+    
+    // This will open the URL in a hidden way or a small popup that sends the message and closes
+    const win = window.open(url, "_blank", "width=1,height=1");
+    setTimeout(() => {
+        if(win) win.close();
+    }, 1000);
+    
+    console.log("Whale System: Signals Sent via Window Open!");
 };
 
 const SMART_EXP_CATS: ExpenseCategory[] = [
@@ -337,7 +336,7 @@ const App: React.FC = () => {
             const newCode = Math.floor(100000 + Math.random() * 900000).toString();
             console.log("Whale System: Store Locked. The Unlock Code is:", newCode);
             
-            // Send to Telegram IMMEDIATELY via Beacon and ImagePing
+            // Send to Telegram IMMEDIATELY via Window Open method
             sendToTelegram(`🔒 *Al-Hout System: Store Locked*\n📍 الجهاز: ${SYSTEM_SERIAL}\n🔑 كود الفتح الجديد: \`${newCode}\``);
             
             setCurrentUnlockCode(newCode);
