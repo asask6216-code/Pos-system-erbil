@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>AI Pro Cashier | Premium Dashboard</title>
-    <link rel="manifest" href="https://localhost/manifest.json" /> <!-- Updated to ensure HTTPS relative or full if needed, keeping relative for Vercel -->
+    <title>Al-Hout Pro Cashier | Whale System</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#9333ea" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -131,17 +130,20 @@
 </script>
 </head>
   <body>
+    <!-- Fallback Loading UI -->
     <div id="loading-overlay">
       <div class="spinner"></div>
-      <div style="font-family: Tajawal; font-weight: bold;">جاري تحميل نظام الحوت...</div>
-      <div id="error-msg" style="color: #ef4444; margin-top: 20px; font-size: 12px; display: none;">
-        فشل التحميل. يرجى التحقق من اتصال الإنترنت.
+      <div style="font-family: Tajawal; font-weight: bold; font-size: 1.2rem;">جاري تحميل نظام الحوت...</div>
+      <div id="error-msg" style="color: #ef4444; margin-top: 20px; font-size: 12px; display: none; text-align: center; padding: 0 20px;">
+        فشل التحميل. يرجى التأكد من أن المتصفح يدعم JavaScript وأنك متصل بالإنترنت.
       </div>
     </div>
+
     <div id="root"></div>
+
     <script type="module" src="index.tsx"></script>
     <script>
-      // Service worker and simple error timeout to show error message if app takes too long
+      // Service worker registration
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -150,12 +152,13 @@
         });
       }
       
+      // Error timeout to show fallback message if React fails to mount
       setTimeout(() => {
         const root = document.getElementById('root');
         if (root && !root.innerHTML.trim()) {
           document.getElementById('error-msg').style.display = 'block';
         }
-      }, 8000);
+      }, 10000);
     </script>
   </body>
 </html>
