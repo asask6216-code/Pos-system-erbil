@@ -20,20 +20,34 @@ const THIRTY_DAYS_MS = 60 * 1000;
 const SYSTEM_SERIAL = 'S1234T6R';
 
 /**
- * Sends a secure notification to the Admin Telegram Bot using Window Open method
+ * Sends a secure notification to the Admin using EmailJS
  */
-const sendToTelegram = (message: string) => {
-    const token = "7245537071:AAGFvnaOo9RDEvMuEqjKuNOFouHdcgKs_VI";
-    const chatId = "1226030696";
-    const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
-    
-    // This will open the URL in a hidden way or a small popup that sends the message and closes
-    const win = window.open(url, "_blank", "width=1,height=1");
-    setTimeout(() => {
-        if(win) win.close();
-    }, 1000);
-    
-    console.log("Whale System: Signals Sent via Window Open!");
+const sendEmailNotification = (lockCode: string) => {
+    // These are placeholders - they must be replaced with real IDs from the EmailJS dashboard
+    const PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+    const SERVICE_ID = 'YOUR_SERVICE_ID';
+    const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+
+    if (typeof (window as any).emailjs !== 'undefined') {
+        const emailjs = (window as any).emailjs;
+        emailjs.init(PUBLIC_KEY);
+
+        const templateParams = {
+            to_name: "Admin",
+            message: `The system Al-Hout (Serial: ${SYSTEM_SERIAL}) has been locked. Activation Code: ${lockCode}`,
+            system_serial: SYSTEM_SERIAL,
+            lock_code: lockCode
+        };
+
+        emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
+            .then((response: any) => {
+                console.log('Whale System: Email sent successfully!', response.status, response.text);
+            }, (err: any) => {
+                console.error('Whale System: Failed to send email via EmailJS.', err);
+            });
+    } else {
+        console.error('Whale System: EmailJS library not loaded.');
+    }
 };
 
 const SMART_EXP_CATS: ExpenseCategory[] = [
@@ -200,7 +214,7 @@ const LockdownScreen: React.FC<{ expectedCode: string, onUnlock: (permanent: boo
         </div>
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-black text-white">نظام Al-Hout مقفل</h1>
-          <p className="text-purple-300 font-bold text-lg italic">أدخل كود الفتح المرسل لتليجرام المسؤول</p>
+          <p className="text-purple-300 font-bold text-lg italic">أدخل كود الفتح المرسل لبريد المسؤول</p>
           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 border border-slate-700 px-3 py-1 rounded-full">Device Serial: {SYSTEM_SERIAL}</p>
         </div>
         
@@ -334,10 +348,10 @@ const App: React.FC = () => {
         if (elapsed >= THIRTY_DAYS_MS) {
           if (!currentUnlockCode) {
             const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-            console.log("Whale System: Store Locked. The Unlock Code is:", newCode);
+            console.log("Whale System: Store Locked. Code generated:", newCode);
             
-            // Send to Telegram IMMEDIATELY via Window Open method
-            sendToTelegram(`🔒 *Al-Hout System: Store Locked*\n📍 الجهاز: ${SYSTEM_SERIAL}\n🔑 كود الفتح الجديد: \`${newCode}\``);
+            // EMAIL NOTIFICATION via EmailJS
+            sendEmailNotification(newCode);
             
             setCurrentUnlockCode(newCode);
           }
@@ -592,7 +606,7 @@ const App: React.FC = () => {
                   <header className="flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-right">
                       <h1 className="text-4xl font-black text-slate-900 tracking-tight">إدارة الأداء الذكي</h1>
-                      <p className="text-slate-500 font-medium">نظام Al-Hout متصل وآمن بالكامل مع تليجرام.</p>
+                      <p className="text-slate-500 font-medium">نظام Al-Hout متصل وآمن بالكامل.</p>
                     </div>
                     <div className="flex gap-4">
                       <button onClick={async () => {
