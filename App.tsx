@@ -19,34 +19,36 @@ import { saveData, getData, clearStore } from './db';
 const THIRTY_DAYS_MS = 60 * 1000; 
 const SYSTEM_SERIAL = 'S1234T6R';
 
+// EmailJS Credentials
+const EMAILJS_PUBLIC_KEY = '_12vJZB_e1j5sHiaZ';
+const EMAILJS_SERVICE_ID = 'service_5xstiu8';
+const EMAILJS_TEMPLATE_ID = 'template_l8k7kia';
+const ADMIN_EMAIL = 'discordwa40@gmail.com';
+
 /**
  * Sends a secure notification to the Admin using EmailJS
  */
-const sendEmailNotification = (lockCode: string) => {
-    // These are placeholders - they must be replaced with real IDs from the EmailJS dashboard
-    const PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
-    const SERVICE_ID = 'YOUR_SERVICE_ID';
-    const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
-
+const sendEmailNotification = (code: string) => {
     if (typeof (window as any).emailjs !== 'undefined') {
         const emailjs = (window as any).emailjs;
-        emailjs.init(PUBLIC_KEY);
+        emailjs.init(EMAILJS_PUBLIC_KEY);
 
         const templateParams = {
-            to_name: "Admin",
-            message: `The system Al-Hout (Serial: ${SYSTEM_SERIAL}) has been locked. Activation Code: ${lockCode}`,
-            system_serial: SYSTEM_SERIAL,
-            lock_code: lockCode
+            lock_code: code,
+            to_email: ADMIN_EMAIL,
+            message: "Your trading system lock code is: " + code,
+            system_serial: SYSTEM_SERIAL
         };
 
-        emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
-            .then((response: any) => {
-                console.log('Whale System: Email sent successfully!', response.status, response.text);
-            }, (err: any) => {
-                console.error('Whale System: Failed to send email via EmailJS.', err);
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+            .then(() => {
+                console.log(`Success! Email sent to ${ADMIN_EMAIL}`);
+            })
+            .catch((err: any) => {
+                console.error("Whale System Error: EmailJS failed to send notification", err);
             });
     } else {
-        console.error('Whale System: EmailJS library not loaded.');
+        console.error('Whale System: EmailJS library not found in window object.');
     }
 };
 
@@ -162,7 +164,6 @@ const ActivationAdminPanel: React.FC<{ onActivate: (mode: 'installment' | 'lifet
   );
 };
 
-// --- Professional Lockdown UI (Indigo/Purple) ---
 const LockdownScreen: React.FC<{ expectedCode: string, onUnlock: (permanent: boolean) => void }> = ({ expectedCode, onUnlock }) => {
   const [inputCode, setInputCode] = useState('');
   const [error, setError] = useState('');

@@ -132,7 +132,6 @@
 </script>
 </head>
   <body>
-    <!-- Fallback Loading UI -->
     <div id="loading-overlay">
       <div class="spinner"></div>
       <div style="font-family: Tajawal; font-weight: bold; font-size: 1.2rem;">جاري تحميل نظام الحوت...</div>
@@ -145,7 +144,6 @@
 
     <script type="module" src="index.tsx"></script>
     <script>
-      // Service worker registration
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -154,7 +152,6 @@
         });
       }
       
-      // Error timeout to show fallback message if React fails to mount
       setTimeout(() => {
         const root = document.getElementById('root');
         if (root && !root.innerHTML.trim()) {
