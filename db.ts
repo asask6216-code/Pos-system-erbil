@@ -1,6 +1,6 @@
 
-export const DB_NAME = 'AI_PRO_CASHIER_DB';
-export const DB_VERSION = 1;
+export const DB_NAME = 'AL_HOUT_PRO_ULTIMATE_DB';
+export const DB_VERSION = 3;
 
 export interface StoreNames {
   settings: 'settings';
@@ -8,6 +8,7 @@ export interface StoreNames {
   transactions: 'transactions';
   expenses: 'expenses';
   debts: 'debts';
+  returns: 'returns';
 }
 
 const STORES: StoreNames = {
@@ -16,6 +17,7 @@ const STORES: StoreNames = {
   transactions: 'transactions',
   expenses: 'expenses',
   debts: 'debts',
+  returns: 'returns',
 };
 
 export const initDB = (): Promise<IDBDatabase> => {
@@ -56,10 +58,4 @@ export const getData = async (storeName: keyof StoreNames, key: string): Promise
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
-};
-
-export const clearStore = async (storeName: keyof StoreNames) => {
-  const db = await initDB();
-  const transaction = db.transaction(storeName, 'readwrite');
-  transaction.objectStore(storeName).clear();
 };

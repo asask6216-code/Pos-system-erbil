@@ -1,6 +1,7 @@
 
 import { Category, Product } from './types';
 
+// Adding variants: [] to each product to satisfy the Product interface requirement
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: '1',
@@ -11,7 +12,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: Category.Men,
     stock: 20,
     minStock: 5,
-    barcode: '123456789'
+    barcode: '123456789',
+    variants: []
   },
   {
     id: '2',
@@ -22,7 +24,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: Category.Women,
     stock: 12,
     minStock: 3,
-    barcode: '987654321'
+    barcode: '987654321',
+    variants: []
   },
   {
     id: '3',
@@ -33,7 +36,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: Category.Kids,
     stock: 2,
     minStock: 5,
-    barcode: '111222333'
+    barcode: '111222333',
+    variants: []
   },
   {
     id: '4',
@@ -44,6 +48,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: Category.Shortcuts,
     stock: 50,
     minStock: 10,
-    barcode: '444555666'
+    barcode: '444555666',
+    variants: []
   }
 ];

@@ -7,13 +7,13 @@ export enum Category {
   Shortcuts = 'سريع'
 }
 
-export type ExpenseCategoryType = 'A' | 'B' | 'C';
+export type ExpenseCategoryType = 'رواتب' | 'إيجار' | 'ديكور' | 'كهرباء وماء' | 'بضاعة' | 'تسويق' | 'نثريات';
 
-export interface ExpenseCategory {
+export interface ProductVariant {
   id: string;
-  name: string;
+  size: 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'Free';
   color: string;
-  type: ExpenseCategoryType;
+  stock: number;
 }
 
 export interface Product {
@@ -23,13 +23,15 @@ export interface Product {
   cost: number;
   image: string;
   category: Category;
-  stock: number;
+  stock: number; 
   minStock: number;
   barcode?: string;
+  variants: ProductVariant[];
 }
 
 export interface CartItem extends Product {
   quantity: number;
+  selectedVariantId?: string;
 }
 
 export interface Transaction {
@@ -42,26 +44,45 @@ export interface Transaction {
   customerName?: string;
   customerPhone?: string;
   sellerId: string;
+  pointsEarned: number;
 }
 
 export interface Debt {
   id: string;
   customerName: string;
   customerPhone: string;
-  amount: number;
+  totalAmount: number;
+  paidAmount: number;
   timestamp: Date;
   status: 'pending' | 'paid';
+  history: { amount: number; date: Date; type: 'payment' | 'initial' }[];
 }
 
 export interface Expense {
   id: string;
   title: string;
   amount: number;
-  categoryId: string;
+  category: ExpenseCategoryType;
   timestamp: Date;
   recordedBy: string;
   receiptImage?: string;
-  isAiVerified?: boolean;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
+
+export interface LicenseData {
+  mode: 'trial' | 'installment' | 'permanent';
+  modeSet: boolean;
+  activationDate: number | null;
+  lastRenewalCycle: number;
+  isLocked: boolean;
+  expiryDate: number | null;
+  totalInstallments: number;
+  isTestMode: boolean; 
+  cycleStartTime: number | null;
 }
 
 export interface ShopConfig {
@@ -71,4 +92,6 @@ export interface ShopConfig {
   phone: string;
   currency: string;
   ownerPhone: string;
+  theme: 'dark' | 'light';
+  license: LicenseData;
 }
